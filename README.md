@@ -7,6 +7,16 @@
 
 The Tilia Package Importer allows easy import of the [Tilia] packages into the [Unity] software as the default Unity Package Manager only supports the old `all` route for package listing which is no longer supported on npmjs.
 
+## Getting Started
+
+Browse to `Main Menu -> Window -> Tilia -> Package Importer` in the Unity software and select the `Package Importer` option.
+
+This will open the `Package Importer` window.
+
+> The package importer will attempt to add the required `Scoped Registry` to your project manifest automatically.
+
+A list of available Tilia packages will then be displayed in the `Package Importer` window and clicking `Add` next to the relevant package will attempt to add that package to your project.
+
 ## Code of Conduct
 
 Please refer to the Extend Reality [Code of Conduct].
