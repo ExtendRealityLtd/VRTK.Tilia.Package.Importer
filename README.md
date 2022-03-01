@@ -11,6 +11,12 @@ The Tilia Package Importer allows easy import of the [Tilia] packages into the [
 
 Please refer to the Extend Reality [Code of Conduct].
 
+## Third Party Pacakges
+
+The Tilia Package Importer uses the following 3rd party packages:
+
+* [SimpleJSON] by Bunny83.
+
 ## License
 
 Code released under the [MIT License][License].
@@ -21,3 +27,4 @@ Code released under the [MIT License][License].
 
 [Tilia]: https://www.vrtk.io/tilia.html
 [Unity]: https://unity3d.com/
+[SimpleJSON]: https://github.com/Bunny83/SimpleJSON
