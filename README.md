@@ -13,9 +13,13 @@ Browse to `Main Menu -> Window -> Tilia -> Package Importer` in the Unity softwa
 
 This will open the `Package Importer` window.
 
-> The package importer will attempt to add the required `Scoped Registry` to your project manifest automatically.
+If the `io.extendreality` Scoped Registry is not present in the Unity project manifest.json file then a message will appear promting to attempt to add the required scoped registry by clicking the `Add Scoped Registry` button.
 
-A list of available Tilia packages will then be displayed in the `Package Importer` window and clicking `Add` next to the relevant package will attempt to add that package to your project.
+When the `io.extendreality` Scoped Registry is present in the Unity project manifest.json file a list of available Tilia packages will be displayed in the `Package Importer` window.
+
+Find the required package and click `Add` next to the relevant package to attempt to add that package to your project.
+
+Clicking the `View` button will open the GitHub webpage for the relevant package.
 
 ## Code of Conduct
 

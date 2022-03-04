@@ -25,6 +25,9 @@ namespace Tilia.Utilities
         private static AddRequest addRequest;
         private static ListRequest installedPackagesRequest;
 
+        private bool registryFound;
+        private string manifestFile;
+        private JSONNode rootManifest;
         private EditorCoroutine getWebDataRoutine;
         private string availableScopedRegistry;
         private List<string> availablePackages = new List<string>();
@@ -48,30 +51,42 @@ namespace Tilia.Utilities
             {
                 scrollPosition = scrollViewScope.scrollPosition;
 
-                foreach (string availablePackage in availablePackages.Except(installedPackages).ToList())
+                if (!registryFound)
                 {
-                    using (new EditorGUILayout.HorizontalScope())
+                    EditorGUILayout.HelpBox("The required scoped registry has not been found in your project manifest.json.\n\n" +
+                        "Click the button below to attempt to automatically add the required scoped registry to your project manifest.json file.", MessageType.Warning);
+                    if (GUILayout.Button("Add Scoped Registry"))
                     {
-                        packageDescriptions.TryGetValue(availablePackage, out string packageDescription);
-                        packageUrls.TryGetValue(availablePackage, out string packageUrl);
-                        GUILayout.Label(new GUIContent(availablePackage, packageDescription));
-                        GUILayout.FlexibleSpace();
-                        if (addRequest == null)
-                        {
-                            if (GUILayout.Button("Add"))
-                            {
-                                addRequest = Client.Add(availablePackage);
-                                EditorApplication.update += HandlePackageAddRequest;
-                            }
-
-                            if (GUILayout.Button(new GUIContent("View", "View on GitHub")))
-                            {
-                                Application.OpenURL(packageUrl);
-                            }
-                            GUILayout.Label(" ", new GUIStyle { fontSize = 10 });
-                        }
+                        AddRegistry();
                     }
-                    DrawHorizontalLine();
+                }
+                else
+                {
+                    foreach (string availablePackage in availablePackages.Except(installedPackages).ToList())
+                    {
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            packageDescriptions.TryGetValue(availablePackage, out string packageDescription);
+                            packageUrls.TryGetValue(availablePackage, out string packageUrl);
+                            GUILayout.Label(new GUIContent(availablePackage, packageDescription));
+                            GUILayout.FlexibleSpace();
+                            if (addRequest == null)
+                            {
+                                if (GUILayout.Button("Add"))
+                                {
+                                    addRequest = Client.Add(availablePackage);
+                                    EditorApplication.update += HandlePackageAddRequest;
+                                }
+
+                                if (GUILayout.Button(new GUIContent("View", "View on GitHub")))
+                                {
+                                    Application.OpenURL(packageUrl);
+                                }
+                                GUILayout.Label(" ", new GUIStyle { fontSize = 10 });
+                            }
+                        }
+                        DrawHorizontalLine();
+                    }
                 }
             }
 
@@ -156,18 +171,18 @@ namespace Tilia.Utilities
                 packageUrls.Add(package["name"], package["url"]);
             }
 
-            AddRegistry();
+            DoesRegistryExist();
         }
 
-        private void AddRegistry()
+        private bool DoesRegistryExist()
         {
-            string manifestFile = Path.Combine(Application.dataPath, "..", "Packages", "manifest.json");
+            manifestFile = Path.Combine(Application.dataPath, "..", "Packages", "manifest.json");
             string manifest = File.ReadAllText(manifestFile);
-            JSONNode root = JSONNode.Parse(manifest);
+            rootManifest = JSONNode.Parse(manifest);
 
-            bool registryFound = false;
+            registryFound = false;
 
-            foreach (JSONNode registry in root["scopedRegistries"])
+            foreach (JSONNode registry in rootManifest["scopedRegistries"])
             {
                 if (Array.IndexOf(registry["scopes"], "io.extendreality") > -1)
                 {
@@ -175,11 +190,17 @@ namespace Tilia.Utilities
                 }
             }
 
+            return registryFound;
+        }
+
+        private void AddRegistry()
+        {
             if (!registryFound && !string.IsNullOrEmpty(availableScopedRegistry))
             {
                 JSONNode newNode = JSONNode.Parse(availableScopedRegistry);
-                root["scopedRegistries"].Add(newNode);
-                File.WriteAllText(manifestFile, root.ToString());
+                rootManifest["scopedRegistries"].Add(newNode);
+                File.WriteAllText(manifestFile, rootManifest.ToString());
+                DownloadPackageList();
             }
         }
 
