@@ -21,6 +21,8 @@ Find the required package and click `Add` next to the relevant package to attemp
 
 Clicking the `View` button will open the GitHub webpage for the relevant package.
 
+You can filter the list contents by free typing into the `Filter` text box.
+
 ## Code of Conduct
 
 Please refer to the Extend Reality [Code of Conduct].

@@ -34,6 +34,7 @@ namespace Tilia.Utilities
         private Dictionary<string, string> packageDescriptions = new Dictionary<string, string>();
         private Dictionary<string, string> packageUrls = new Dictionary<string, string>();
         private Vector2 scrollPosition;
+        private string searchString = "";
 
         public void OnGUI()
         {
@@ -43,27 +44,42 @@ namespace Tilia.Utilities
                 windowAlreadyOpen = true;
             }
 
-            GUILayout.Space(8);
-            GUILayout.Label(" Available Tilia Packages To Import", new GUIStyle { fontSize = 14, fontStyle = FontStyle.Bold });
+            DrawHorizontalLine(Color.black);
+            GUILayout.Space(1);
+            GUILayout.Label(" Available Tilia Packages To Import", new GUIStyle { fontSize = 15, fontStyle = FontStyle.Bold });
             DrawHorizontalLine(Color.black);
 
-            using (GUILayout.ScrollViewScope scrollViewScope = new GUILayout.ScrollViewScope(scrollPosition))
+            if (!registryFound)
             {
-                scrollPosition = scrollViewScope.scrollPosition;
-
-                if (!registryFound)
+                EditorGUILayout.HelpBox("The required scoped registry has not been found in your project manifest.json.\n\n" +
+                    "Click the button below to attempt to automatically add the required scoped registry to your project manifest.json file.", MessageType.Warning);
+                GUILayout.Space(4);
+                if (GUILayout.Button("Add Scoped Registry"))
                 {
-                    EditorGUILayout.HelpBox("The required scoped registry has not been found in your project manifest.json.\n\n" +
-                        "Click the button below to attempt to automatically add the required scoped registry to your project manifest.json file.", MessageType.Warning);
-                    if (GUILayout.Button("Add Scoped Registry"))
-                    {
-                        AddRegistry();
-                    }
+                    AddRegistry();
                 }
-                else
+            }
+            else
+            {
+                using (new EditorGUILayout.HorizontalScope())
                 {
+                    EditorGUILayout.LabelField("Filter", GUILayout.Width(40));
+                    searchString = EditorGUILayout.TextField(searchString);
+                }
+
+                DrawHorizontalLine();
+
+                using (GUILayout.ScrollViewScope scrollViewScope = new GUILayout.ScrollViewScope(scrollPosition))
+                {
+                    scrollPosition = scrollViewScope.scrollPosition;
+
                     foreach (string availablePackage in availablePackages.Except(installedPackages).ToList())
                     {
+                        if (!string.IsNullOrEmpty(searchString.Trim()) && !availablePackage.Contains(searchString))
+                        {
+                            continue;
+                        }
+
                         using (new EditorGUILayout.HorizontalScope())
                         {
                             packageDescriptions.TryGetValue(availablePackage, out string packageDescription);
@@ -88,17 +104,17 @@ namespace Tilia.Utilities
                         DrawHorizontalLine();
                     }
                 }
-            }
 
-            DrawHorizontalLine(Color.black);
+                DrawHorizontalLine(Color.black);
 
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                if (addRequest == null)
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("Download Package List"))
+                    if (addRequest == null)
                     {
-                        DownloadPackageList();
+                        if (GUILayout.Button("Download Package List"))
+                        {
+                            DownloadPackageList();
+                        }
                     }
                 }
             }
