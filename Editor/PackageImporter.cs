@@ -111,7 +111,7 @@ namespace Tilia.Utilities
                 {
                     if (addRequest == null)
                     {
-                        if (GUILayout.Button("Download Package List"))
+                        if (GUILayout.Button("Refresh Package List"))
                         {
                             DownloadPackageList();
                         }

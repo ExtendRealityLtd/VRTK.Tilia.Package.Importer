@@ -23,6 +23,8 @@ Clicking the `View` button will open the GitHub webpage for the relevant package
 
 You can filter the list contents by free typing into the `Filter` text box.
 
+> If you need to refresh the package list, then click the `Refresh Package List` button.
+
 ## Code of Conduct
 
 Please refer to the Extend Reality [Code of Conduct].
