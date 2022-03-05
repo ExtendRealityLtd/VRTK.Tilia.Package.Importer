@@ -37,6 +37,10 @@ You can filter the list contents by free typing into the `Filter` text box.
 
 If you are using Unity 2021.2 or above, then you will be able to add multiple packages at the same time by ticking the checkbox next to each package you wish you import and then clicking the `Add Selected Packages` button.
 
+## Contributing
+
+Please refer to the Extend Reality [Contributing guidelines] and the [project coding conventions].
+
 ## Code of Conduct
 
 Please refer to the Extend Reality [Code of Conduct].
@@ -53,6 +57,8 @@ Code released under the [MIT License][License].
 
 [Tilia-Image]: https://raw.githubusercontent.com/ExtendRealityLtd/related-media/main/github/readme/tilia.png
 [License]: LICENSE.md
+[project coding conventions]: https://github.com/ExtendRealityLtd/.github/blob/master/CONVENTIONS/UNITY3D.md
+[Contributing guidelines]: https://github.com/ExtendRealityLtd/.github/blob/master/CONTRIBUTING.md
 [Code of Conduct]: https://github.com/ExtendRealityLtd/.github/blob/master/CODE_OF_CONDUCT.md
 
 [Tilia]: https://www.vrtk.io/tilia.html
