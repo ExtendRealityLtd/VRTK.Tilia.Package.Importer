@@ -9,21 +9,33 @@ The Tilia Package Importer allows easy import of the [Tilia] packages into the [
 
 ## Getting Started
 
+### Opening the Package Importer
+
 Browse to `Main Menu -> Window -> Tilia -> Package Importer` in the Unity software and select the `Package Importer` option.
 
 This will open the `Package Importer` window.
+
+> If you need to refresh the package list, then click the `Refresh Package List` button.
+
+### Adding the required Scoped Registry
 
 If the `io.extendreality` Scoped Registry is not present in the Unity project manifest.json file then a message will appear promting to attempt to add the required scoped registry by clicking the `Add Scoped Registry` button.
 
 When the `io.extendreality` Scoped Registry is present in the Unity project manifest.json file a list of available Tilia packages will be displayed in the `Package Importer` window.
 
+### Adding a Tilia package
+
 Find the required package and click `Add` next to the relevant package to attempt to add that package to your project.
 
 Clicking the `View` button will open the GitHub webpage for the relevant package.
 
+### Filtering the package list
+
 You can filter the list contents by free typing into the `Filter` text box.
 
-> If you need to refresh the package list, then click the `Refresh Package List` button.
+### Adding multiple Tilia packages at the same time
+
+If you are using Unity 2021.2 or above, then you will be able to add multiple packages at the same time by ticking the checkbox next to each package you wish you import and then clicking the `Add Selected Packages` button.
 
 ## Code of Conduct
 

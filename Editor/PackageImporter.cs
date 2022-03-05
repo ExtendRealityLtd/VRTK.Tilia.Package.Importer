@@ -20,12 +20,24 @@ namespace Tilia.Utilities
         private const string WindowPath = "Window/Tilia/";
         private const string WindowName = "Package Importer";
         private const string DataUri = "https://www.vrtk.io/tilia.json";
+        private const string titleLabel = " Available Tilia Packages To Import";
+        private const string addingPackagesMessage = "Adding packages, please wait...";
+        private const string scopedRegisryMissingText = "The required scoped registry has not been found in your project manifest.json.\n\nClick the button below to attempt to automatically add the required scoped registry to your project manifest.json file.";
+        private const string addScopedRegistryButtonText = "Add Scoped Registry";
+        private const string loadingText = "Loading";
+        private const string filterLabel = "Filter";
+        private const int filterLabelWidth = 40;
+        private const string addButtonText = "Add";
+        private const string viewButtonText = "View";
+        private const string viewButtonTooltip = "View on GitHub";
+        private const string refreshPackageListButton = "Refresh Package List";
         private static bool windowAlreadyOpen;
         private static List<string> installedPackages = new List<string>();
         private static AddRequest addRequest;
         private static ListRequest installedPackagesRequest;
 
         private bool registryFound;
+        private bool registryChecked;
         private string manifestFile;
         private JSONNode rootManifest;
         private EditorCoroutine getWebDataRoutine;
@@ -35,6 +47,13 @@ namespace Tilia.Utilities
         private Dictionary<string, string> packageUrls = new Dictionary<string, string>();
         private Vector2 scrollPosition;
         private string searchString = "";
+
+#if UNITY_2021_2_OR_NEWER
+        private const string addSelectedPackagesButton = "Add Selected Packages";
+        private static AddAndRemoveRequest addAndRemoveRequest;
+        private Dictionary<string, bool> checkboxes = new Dictionary<string, bool>();
+        private List<string> packagesToAdd = new List<string>();
+#endif
 
         public void OnGUI()
         {
@@ -46,24 +65,30 @@ namespace Tilia.Utilities
 
             DrawHorizontalLine(Color.black);
             GUILayout.Space(1);
-            GUILayout.Label(" Available Tilia Packages To Import", new GUIStyle { fontSize = 15, fontStyle = FontStyle.Bold });
+            GUILayout.Label(titleLabel, new GUIStyle { fontSize = 15, fontStyle = FontStyle.Bold });
             DrawHorizontalLine(Color.black);
 
             if (!registryFound)
             {
-                EditorGUILayout.HelpBox("The required scoped registry has not been found in your project manifest.json.\n\n" +
-                    "Click the button below to attempt to automatically add the required scoped registry to your project manifest.json file.", MessageType.Warning);
-                GUILayout.Space(4);
-                if (GUILayout.Button("Add Scoped Registry"))
+                if (registryChecked)
                 {
-                    AddRegistry();
+                    EditorGUILayout.HelpBox(scopedRegisryMissingText, MessageType.Warning);
+                    GUILayout.Space(4);
+                    if (GUILayout.Button(addScopedRegistryButtonText))
+                    {
+                        AddRegistry();
+                    }
+                }
+                else
+                {
+                    GUILayout.Label(loadingText);
                 }
             }
             else
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField("Filter", GUILayout.Width(40));
+                    EditorGUILayout.LabelField(filterLabel, GUILayout.Width(filterLabelWidth));
                     searchString = EditorGUILayout.TextField(searchString);
                 }
 
@@ -73,37 +98,70 @@ namespace Tilia.Utilities
                 {
                     scrollPosition = scrollViewScope.scrollPosition;
 
-                    foreach (string availablePackage in availablePackages.Except(installedPackages).ToList())
+                    if (addRequest != null)
                     {
-                        if (!string.IsNullOrEmpty(searchString.Trim()) && !availablePackage.Contains(searchString))
+                        GUILayout.Label(addingPackagesMessage);
+                    }
+#if UNITY_2021_2_OR_NEWER
+                    else if (addAndRemoveRequest != null)
+                    {
+                        GUILayout.Label(addingPackagesMessage);
+                    }
+#endif
+                    else
+                    {
+                        foreach (string availablePackage in availablePackages.Except(installedPackages).ToList())
                         {
-                            continue;
-                        }
-
-                        using (new EditorGUILayout.HorizontalScope())
-                        {
-                            packageDescriptions.TryGetValue(availablePackage, out string packageDescription);
-                            packageUrls.TryGetValue(availablePackage, out string packageUrl);
-                            GUILayout.Label(new GUIContent(availablePackage, packageDescription));
-                            GUILayout.FlexibleSpace();
-                            if (addRequest == null)
+                            if (!string.IsNullOrEmpty(searchString.Trim()) && !availablePackage.Contains(searchString))
                             {
-                                if (GUILayout.Button("Add"))
+                                continue;
+                            }
+
+                            using (new EditorGUILayout.HorizontalScope())
+                            {
+                                packageDescriptions.TryGetValue(availablePackage, out string packageDescription);
+                                packageUrls.TryGetValue(availablePackage, out string packageUrl);
+
+#if UNITY_2021_2_OR_NEWER
+                                if (checkboxes.ContainsKey(availablePackage))
                                 {
-                                    addRequest = Client.Add(availablePackage);
-                                    EditorApplication.update += HandlePackageAddRequest;
+                                    checkboxes[availablePackage] = GUILayout.Toggle(checkboxes[availablePackage], "");
+                                }
+#endif
+
+                                GUILayout.Label(new GUIContent(availablePackage, packageDescription));
+                                GUILayout.FlexibleSpace();
+
+                                if (GUILayout.Button(addButtonText))
+                                {
+                                    AddPackage(availablePackage);
                                 }
 
-                                if (GUILayout.Button(new GUIContent("View", "View on GitHub")))
+                                if (GUILayout.Button(new GUIContent(viewButtonText, viewButtonTooltip)))
                                 {
                                     Application.OpenURL(packageUrl);
                                 }
                                 GUILayout.Label(" ", new GUIStyle { fontSize = 10 });
                             }
+                            DrawHorizontalLine();
                         }
-                        DrawHorizontalLine();
                     }
                 }
+
+#if UNITY_2021_2_OR_NEWER
+                if (HasSelectedPackages() && addRequest == null && addAndRemoveRequest == null)
+                {
+                    DrawHorizontalLine(Color.black);
+
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button(addSelectedPackagesButton))
+                        {
+                            AddSelectedPackages();
+                        }
+                    }
+                }
+#endif
 
                 DrawHorizontalLine(Color.black);
 
@@ -111,16 +169,81 @@ namespace Tilia.Utilities
                 {
                     if (addRequest == null)
                     {
-                        if (GUILayout.Button("Refresh Package List"))
+#if UNITY_2021_2_OR_NEWER
+                        if (addAndRemoveRequest == null)
+                        {
+#endif
+                        if (GUILayout.Button(refreshPackageListButton))
                         {
                             DownloadPackageList();
                         }
+#if UNITY_2021_2_OR_NEWER
+                        }
+#endif
                     }
                 }
             }
 
             GUILayout.Space(8);
         }
+
+        private void AddPackage(string packageName)
+        {
+            addRequest = Client.Add(packageName);
+            EditorApplication.update += HandlePackageAddRequest;
+        }
+
+#if UNITY_2021_2_OR_NEWER
+        private bool HasSelectedPackages()
+        {
+            bool result = false;
+            foreach (KeyValuePair<string, bool> entry in checkboxes)
+            {
+                if (entry.Value == true)
+                {
+                    return true;
+                }
+            }
+
+            return result;
+        }
+
+        private void AddSelectedPackages()
+        {
+            packagesToAdd.Clear();
+            foreach (KeyValuePair<string, bool> entry in checkboxes)
+            {
+                if (entry.Value == true)
+                {
+                    packagesToAdd.Add(entry.Key);
+                }
+            }
+
+            if (packagesToAdd.Count > 0)
+            {
+                addAndRemoveRequest = Client.AddAndRemove(packagesToAdd.ToArray());
+                EditorApplication.update += HandlePackageAddAndRemoveRequest;
+            }
+        }
+
+        private static void HandlePackageAddAndRemoveRequest()
+        {
+            if (addAndRemoveRequest != null && addAndRemoveRequest.IsCompleted)
+            {
+                if (addAndRemoveRequest.Status == StatusCode.Success)
+                {
+                    GetInstalledPackages();
+                }
+                else
+                {
+                    Debug.LogError("Failure to add package: " + addAndRemoveRequest.Error.message);
+                }
+
+                EditorApplication.update -= HandlePackageAddAndRemoveRequest;
+                addAndRemoveRequest = null;
+            }
+        }
+#endif
 
         private void DownloadPackageList()
         {
@@ -175,6 +298,10 @@ namespace Tilia.Utilities
             availablePackages.Clear();
             packageDescriptions.Clear();
             packageUrls.Clear();
+#if UNITY_2021_2_OR_NEWER
+            checkboxes.Clear();
+#endif
+
             if (!string.IsNullOrEmpty(jsonData["scopedRegistry"]))
             {
                 availableScopedRegistry = "{ " + jsonData["scopedRegistry"] + " }";
@@ -185,12 +312,15 @@ namespace Tilia.Utilities
                 availablePackages.Add(package["name"]);
                 packageDescriptions.Add(package["name"], package["description"] + ".\n\nLatest version: " + package["version"]);
                 packageUrls.Add(package["name"], package["url"]);
+#if UNITY_2021_2_OR_NEWER
+                checkboxes.Add(package["name"], false);
+#endif
             }
 
             DoesRegistryExist();
         }
 
-        private bool DoesRegistryExist()
+        private void DoesRegistryExist()
         {
             manifestFile = Path.Combine(Application.dataPath, "..", "Packages", "manifest.json");
             string manifest = File.ReadAllText(manifestFile);
@@ -206,7 +336,7 @@ namespace Tilia.Utilities
                 }
             }
 
-            return registryFound;
+            registryChecked = true;
         }
 
         private void AddRegistry()
@@ -249,7 +379,7 @@ namespace Tilia.Utilities
 
         private static void HandlePackageAddRequest()
         {
-            if (addRequest.IsCompleted)
+            if (addRequest != null && addRequest.IsCompleted)
             {
                 if (addRequest.Status == StatusCode.Success)
                 {
