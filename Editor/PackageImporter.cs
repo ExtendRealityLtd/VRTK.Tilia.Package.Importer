@@ -187,6 +187,28 @@ namespace Tilia.Utilities
             GUILayout.Space(8);
         }
 
+        private void OnDestroy()
+        {
+            if (getWebDataRoutine != null)
+            {
+                EditorCoroutineUtility.StopCoroutine(getWebDataRoutine);
+            }
+
+            if (addRequest != null)
+            {
+                EditorApplication.update -= HandlePackageAddRequest;
+                addRequest = null;
+            }
+
+#if UNITY_2021_2_OR_NEWER
+            if(addAndRemoveRequest != null)
+            {
+                EditorApplication.update -= HandlePackageAddAndRemoveRequest;
+                addAndRemoveRequest = null;
+            }
+#endif
+        }
+
         private void AddPackage(string packageName)
         {
             addRequest = Client.Add(packageName);
