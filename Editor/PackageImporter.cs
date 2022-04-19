@@ -389,7 +389,11 @@ namespace Tilia.Utilities
 
         private static void GetInstalledPackages()
         {
+#if UNITY_2019_3_OR_NEWER
             installedPackagesRequest = Client.List(false, true);
+#else
+            installedPackagesRequest = Client.List(false);
+#endif
             EditorApplication.update += HandleInstalledPackagesRequest;
         }
 
