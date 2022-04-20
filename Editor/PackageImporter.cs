@@ -290,6 +290,7 @@ namespace Tilia.Utilities
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();
 
+#if UNITY_2020_1_OR_NEWER
                 switch (webRequest.result)
                 {
                     case UnityWebRequest.Result.ConnectionError:
@@ -303,6 +304,20 @@ namespace Tilia.Utilities
                         ParseRawData(webRequest.downloadHandler.text);
                         break;
                 }
+#else
+                if (webRequest.isNetworkError)
+                {
+                    Debug.LogError("Error: " + webRequest.error);
+                }
+                else if (webRequest.isHttpError)
+                {
+                    Debug.LogError("HTTP Error: " + webRequest.error);
+                }
+                else
+                {
+                    ParseRawData(webRequest.downloadHandler.text);
+                }
+#endif
             }
 
             getWebDataRoutine = null;
@@ -374,7 +389,11 @@ namespace Tilia.Utilities
 
         private static void GetInstalledPackages()
         {
+#if UNITY_2019_3_OR_NEWER
             installedPackagesRequest = Client.List(false, true);
+#else
+            installedPackagesRequest = Client.List(false);
+#endif
             EditorApplication.update += HandleInstalledPackagesRequest;
         }
 
